@@ -76,6 +76,7 @@ target_include_directories(LlmUsageMonitor PRIVATE src)
 
 if(WIN32)
     target_compile_definitions(LlmUsageMonitor PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
+    target_link_libraries(LlmUsageMonitor PRIVATE Advapi32)
 endif()
 
 if(BUILD_TESTING)
