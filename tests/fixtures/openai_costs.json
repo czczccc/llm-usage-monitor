@@ -1,0 +1,28 @@
+{
+  "data": [
+    {
+      "start_time": 1735689600,
+      "end_time": 1735776000,
+      "results": [
+        {
+          "amount": {
+            "value": 1.25,
+            "currency": "usd"
+          }
+        }
+      ]
+    },
+    {
+      "start_time": 1735776000,
+      "end_time": 1735862400,
+      "results": [
+        {
+          "amount": {
+            "value": 2.75,
+            "currency": "usd"
+          }
+        }
+      ]
+    }
+  ]
+}

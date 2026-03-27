@@ -1,0 +1,23 @@
+{
+  "data": [
+    {
+      "starting_at": "2025-01-01T00:00:00Z",
+      "ending_at": "2025-01-02T00:00:00Z",
+      "results": [
+        {
+          "cost_usd": "1.10"
+        }
+      ]
+    },
+    {
+      "starting_at": "2025-01-02T00:00:00Z",
+      "ending_at": "2025-01-03T00:00:00Z",
+      "results": [
+        {
+          "cost_usd": "2.90"
+        }
+      ]
+    }
+  ],
+  "has_more": false
+}
