@@ -33,6 +33,30 @@ ctest --preset test-debug
 
 If your Qt toolchain is not in the default location, pass the correct path to `CMAKE_PREFIX_PATH`.
 
+For a local release build:
+
+```powershell
+cmake --preset msvc-release -DCMAKE_PREFIX_PATH="C:\Qt\6.8.2\msvc2022_64"
+cmake --build --preset build-release
+ctest --preset test-release
+```
+
+## GitHub Actions and Release
+
+This repository includes two GitHub Actions workflows:
+
+- `ci`: runs on every push to `main` and on pull requests, installs Qt on `windows-2022`, then builds and runs tests.
+- `release`: runs when you push a tag like `v0.1.0`, builds the Windows app, runs tests, deploys Qt runtime files with `windeployqt`, creates a portable ZIP, and uploads it to GitHub Releases.
+
+Release flow:
+
+```powershell
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+After the workflow finishes, download the ZIP from the repository's `Releases` page.
+
 ## Project layout
 
 - `src/app`: Qt Widgets UI and window composition

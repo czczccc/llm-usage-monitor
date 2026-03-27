@@ -20,6 +20,21 @@
         "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
         "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
       }
+    },
+    {
+      "name": "msvc-release",
+      "displayName": "MSVC Release",
+      "generator": "Visual Studio 17 2022",
+      "architecture": {
+        "strategy": "external",
+        "value": "x64"
+      },
+      "binaryDir": "${sourceDir}/build/msvc-release",
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "17",
+        "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
+        "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreadedDLL"
+      }
     }
   ],
   "buildPresets": [
@@ -27,6 +42,11 @@
       "name": "build-debug",
       "configurePreset": "msvc-debug",
       "configuration": "Debug"
+    },
+    {
+      "name": "build-release",
+      "configurePreset": "msvc-release",
+      "configuration": "Release"
     }
   ],
   "testPresets": [
@@ -34,6 +54,14 @@
       "name": "test-debug",
       "configurePreset": "msvc-debug",
       "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "test-release",
+      "configurePreset": "msvc-release",
+      "configuration": "Release",
       "output": {
         "outputOnFailure": true
       }

@@ -1,0 +1,123 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-2022
+
+    env:
+      BUILD_TYPE: Release
+      QT_VERSION: 6.8.3
+      QT_ARCH: win64_msvc2022_64
+      APP_NAME: LlmUsageMonitor
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install CMake
+        shell: pwsh
+        run: |
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' --no-progress -y
+          cmake --version
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          arch: ${{ env.QT_ARCH }}
+          modules: qtcharts qtsvg
+          cache: true
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake --preset msvc-release -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR"
+
+      - name: Build
+        shell: pwsh
+        run: |
+          cmake --build --preset build-release --config $env:BUILD_TYPE
+
+      - name: Test
+        shell: pwsh
+        run: |
+          ctest --preset test-release --build-config $env:BUILD_TYPE --output-on-failure
+
+      - name: Package portable ZIP
+        id: package
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $zipName = "llm-usage-monitor-$tag-windows-x64.zip"
+          $buildDir = Join-Path $env:GITHUB_WORKSPACE "build/msvc-release/$env:BUILD_TYPE"
+          $stagingRoot = Join-Path $env:RUNNER_TEMP "package"
+          $appDir = Join-Path $stagingRoot "llm-usage-monitor"
+          $exePath = Join-Path $buildDir "$env:APP_NAME.exe"
+          $windeployqt = Join-Path $env:QT_ROOT_DIR "bin/windeployqt.exe"
+
+          if (!(Test-Path $exePath)) {
+            throw "Built executable not found: $exePath"
+          }
+          if (!(Test-Path $windeployqt)) {
+            throw "windeployqt not found: $windeployqt"
+          }
+
+          Remove-Item -Recurse -Force $stagingRoot -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $appDir | Out-Null
+          Copy-Item $exePath $appDir
+
+          & $windeployqt `
+            --dir $appDir `
+            --release `
+            --compiler-runtime `
+            --no-translations `
+            (Join-Path $appDir "$env:APP_NAME.exe")
+
+          @'
+          LLM Usage Monitor
+
+          First run notes:
+          - API keys are stored in Windows Credential Manager.
+          - Local history and sync logs are stored under %LOCALAPPDATA%\LlmUsageMonitor\monitor.db.
+          - DeepSeek usage trends require at least two balance refreshes to appear.
+          '@ | Set-Content -Path (Join-Path $appDir "README.txt")
+
+          $zipPath = Join-Path $env:RUNNER_TEMP $zipName
+          if (Test-Path $zipPath) {
+            Remove-Item -Force $zipPath
+          }
+          Compress-Archive -Path $appDir -DestinationPath $zipPath
+
+          "zip_path=$zipPath" >> $env:GITHUB_OUTPUT
+          "zip_name=$zipName" >> $env:GITHUB_OUTPUT
+
+      - name: Upload packaged artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.zip_name }}
+          path: ${{ steps.package.outputs.zip_path }}
+          if-no-files-found: error
+
+      - name: Publish GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $zipPath = "${{ steps.package.outputs.zip_path }}"
+          $zipName = "${{ steps.package.outputs.zip_name }}"
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag $zipPath --title $tag --notes "Automated Windows portable build for $tag."
+          } else {
+            gh release upload $tag $zipPath --clobber
+          }
