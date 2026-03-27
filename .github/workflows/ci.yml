@@ -44,7 +44,8 @@ jobs:
       - name: Build
         shell: pwsh
         run: |
-          cmake --build --preset build-debug --config $env:BUILD_TYPE
+          New-Item -ItemType Directory -Force -Path build/logs | Out-Null
+          cmake --build --preset build-debug --config $env:BUILD_TYPE -- /m /verbosity:detailed /bl:build/logs/ci-msbuild.binlog
 
       - name: Test
         shell: pwsh
@@ -60,4 +61,5 @@ jobs:
             build/msvc-debug/Testing/**
             build/msvc-debug/CMakeFiles/CMakeOutput.log
             build/msvc-debug/CMakeFiles/CMakeError.log
+            build/logs/**
           if-no-files-found: ignore

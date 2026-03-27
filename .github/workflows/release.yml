@@ -44,7 +44,8 @@ jobs:
       - name: Build
         shell: pwsh
         run: |
-          cmake --build --preset build-release --config $env:BUILD_TYPE
+          New-Item -ItemType Directory -Force -Path build/logs | Out-Null
+          cmake --build --preset build-release --config $env:BUILD_TYPE -- /m /verbosity:detailed /bl:build/logs/release-msbuild.binlog
 
       - name: Test
         shell: pwsh
@@ -105,6 +106,18 @@ jobs:
           name: ${{ steps.package.outputs.zip_name }}
           path: ${{ steps.package.outputs.zip_path }}
           if-no-files-found: error
+
+      - name: Upload release logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-build-logs
+          path: |
+            build/msvc-release/Testing/**
+            build/msvc-release/CMakeFiles/CMakeOutput.log
+            build/msvc-release/CMakeFiles/CMakeError.log
+            build/logs/**
+          if-no-files-found: ignore
 
       - name: Publish GitHub release
         env:
